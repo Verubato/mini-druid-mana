@@ -3,7 +3,10 @@
 ## Notes: Shows a mana bar while in cat/bear/boomkin form.
 ## Author: Verz
 ## Version: 1.1.0
+## SavedVariables: MiniDruidManaDB
 ## IconTexture: Interface\AddOns\MiniDruidMana\Icon.blp
 ## X-Curse-Project-ID: 1420386
 
+MiniFramework.lua
+Config.lua
 MiniDruidMana.lua
