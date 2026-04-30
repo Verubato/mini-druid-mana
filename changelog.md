@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+12.0.5 TOC bump.
+
 ## 1.2.0
 
 Added option to show mana value and percentage text.
