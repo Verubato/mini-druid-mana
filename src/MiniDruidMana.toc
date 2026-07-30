@@ -1,8 +1,8 @@
-## Interface: 120005, 50503, 40402, 38000, 30405, 20505, 11508
+## Interface: 120100, 120005, 50503, 40402, 38000, 30405, 20505, 11508
 ## Title: MiniDruidMana
 ## Notes: Shows a mana bar while in cat/bear/boomkin form.
 ## Author: Verz
-## Version: 1.3.0
+## Version: 1.3.1
 ## SavedVariables: MiniDruidManaDB
 ## IconTexture: Interface\AddOns\MiniDruidMana\Icon.blp
 ## X-Curse-Project-ID: 1420386
