@@ -7,6 +7,6 @@
 ## IconTexture: Interface\AddOns\MiniDruidMana\Icon.blp
 ## X-Curse-Project-ID: 1420386
 
-MiniFramework.lua
+Libs\MiniFramework\MiniFramework.xml
 Config.lua
 MiniDruidMana.lua

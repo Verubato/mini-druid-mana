@@ -22,14 +22,11 @@ function M:Init()
 		return
 	end
 
-	local version = C_AddOns.GetAddOnMetadata(addonName, "Version")
-	local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-	title:SetPoint("TOPLEFT", 0, -verticalSpacing)
-	title:SetText(string.format("%s - %s", addonName, version))
-
-	local description = panel:CreateFontString(nil, "ARTWORK", "GameFontWhite")
-	description:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
-	description:SetText("Shows a mana bar while in cat/bear/boomkin form.")
+	local header = mini:PanelHeader({
+		Parent = panel,
+		Description = "Shows a mana bar while in cat/bear/boomkin form.",
+		Y = -verticalSpacing,
+	})
 
 	local textEnabledChk = mini:Checkbox({
 		Parent = panel,
@@ -44,7 +41,7 @@ function M:Init()
 		end,
 	})
 
-	textEnabledChk:SetPoint("TOPLEFT", description, "BOTTOMLEFT", 0, -verticalSpacing)
+	textEnabledChk:SetPoint("TOPLEFT", header.Anchor, "BOTTOMLEFT", 0, -verticalSpacing)
 
 	mini:RegisterSlashCommand(category, panel, {
 		"/minidruidmana",
