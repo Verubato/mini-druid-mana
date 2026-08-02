@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+
+Updated interface versions for the latest Classic, TBC and Mists builds.
+
 ## 1.4.0
 
 New MiniFramework added across all my mini addons.
