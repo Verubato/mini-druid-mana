@@ -1,4 +1,4 @@
-## Interface: 120100, 120005, 50504, 40402, 38000, 30405, 20506, 11509
+## Interface: 120100, 120007, 120005, 50504, 40402, 38002, 38000, 30405, 20506, 11509
 ## Title: MiniDruidMana
 ## Notes: Shows a mana bar while in cat/bear/boomkin form.
 ## Author: Verz
