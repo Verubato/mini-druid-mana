@@ -7,6 +7,7 @@ local db
 local dbDefaults = {
 	TextEnabled = false,
 }
+---@class Config
 local M = {}
 addon.Config = M
 
