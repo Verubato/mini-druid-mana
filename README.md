@@ -16,9 +16,9 @@ Feedback and feature requests are more than welcome!
 
 ## Screenshots
 
-![MiniDruidMana screenshot](https://media.forgecdn.net/attachments/1480/173/screenshot-settings-png.png)
+![MiniDruidMana screenshot](https://raw.githubusercontent.com/Verubato/mini-druid-mana/main/assets/ScreenshotSettings.png)
 
-![MiniDruidMana screenshot](https://media.forgecdn.net/attachments/1451/349/screenshot-png.png)
+![MiniDruidMana screenshot](https://raw.githubusercontent.com/Verubato/mini-druid-mana/main/assets/Screenshot.png)
 
 ## Download
 
