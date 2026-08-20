@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.6
+
+Reduced the work the shared framework code does on paths the addons use heavily.
+
 ## 1.4.5
 
 Added a Mini category so the addon groups with the other Mini addons in the addon list.
