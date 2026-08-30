@@ -29,6 +29,7 @@ function M:Init()
 	local header = mini:PanelHeader({
 		Parent = panel,
 		Description = "Shows a mana bar while in cat/bear/boomkin form.",
+		Divider = true,
 	})
 
 	local textEnabledChk = mini:Checkbox({
