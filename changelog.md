@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.7
+
+UI improvements.
+
 ## 1.4.6
 
 Reduced the work the shared framework code does on paths the addons use heavily.
