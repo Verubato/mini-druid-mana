@@ -20,6 +20,10 @@ local function GetManaPercentage()
 	local mana = UnitPower("player", powerTypeMana)
 	local maxMana = UnitPowerMax("player", powerTypeMana)
 
+	if maxMana == 0 then
+		return 0
+	end
+
 	return (mana / maxMana) * 100
 end
 

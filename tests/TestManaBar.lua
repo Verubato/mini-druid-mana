@@ -69,8 +69,7 @@ fw.describe("MiniDruidMana - GetManaPercentage", function()
 		fw.eq(Container().ManaPercentage:GetText(), "50%", "30 of 60 is 50%, computed by hand")
 	end)
 
-	-- The fallback branch never guards a zero max, so (mana / 0) * 100 formats as garbage.
-	fw.xfail("would show 0% if the fallback's max power guard existed", function()
+	fw.it("shows 0% when the fallback's max power is zero", function()
 		_G.UnitPowerPercent = nil
 		_G.UnitPower = function()
 			return 30
@@ -83,7 +82,7 @@ fw.describe("MiniDruidMana - GetManaPercentage", function()
 			WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
 		end, "a zero max in the fallback path")
 
-		fw.eq(Container().ManaPercentage:GetText(), "0%", "BUG: unguarded division by zero renders as garbage, not 0%")
+		fw.eq(Container().ManaPercentage:GetText(), "0%", "zero max is guarded to 0%")
 	end)
 end)
 
