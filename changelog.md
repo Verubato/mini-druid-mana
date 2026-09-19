@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.8
+
+Added WoW Forever support.
+
 ## 1.4.7
 
 UI improvements.
