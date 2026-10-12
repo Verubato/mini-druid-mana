@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+The mana bar now hides while Blizzard's own druid mana bar is showing, so the two no longer overlap.
+
 ## 1.5.0
 
 The mana bar now has a Blizzard-style border and sits in the player frame's mana slot on newer frames.
