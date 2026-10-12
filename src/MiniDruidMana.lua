@@ -26,6 +26,8 @@ local alternateArt = {
 ---@type Db
 local db
 local hovered = false
+-- Blizzard's own bar for mana in a non-mana form, which shares our slot.
+local blizzardManaBar
 
 local function GetManaPercentage()
 	if UnitPowerPercent then
@@ -75,7 +77,7 @@ local function UpdateManaBar()
 	UpdateManaText(mana, maxMana)
 
 	local type = UnitPowerType("player")
-	local show = type ~= powerTypeMana
+	local show = type ~= powerTypeMana and not (blizzardManaBar and blizzardManaBar:IsVisible())
 
 	if show then
 		container:Show()
@@ -249,6 +251,14 @@ local function InitManaBar()
 		PlayerFrameBottomManagedFramesContainer:ClearAllPoints()
 		-- shift the combo points frame down a tad
 		PlayerFrameBottomManagedFramesContainer:SetPoint(point, relativeTo, relativeToPoint, xOffset, yOffset - 5)
+	end
+
+	-- AlternatePowerBar on retail, PlayerFrameAlternateManaBar on Wrath, Cata, and Mists Classic.
+	blizzardManaBar = AlternatePowerBar or PlayerFrameAlternateManaBar
+
+	if blizzardManaBar then
+		blizzardManaBar:HookScript("OnShow", UpdateManaBar)
+		blizzardManaBar:HookScript("OnHide", UpdateManaBar)
 	end
 
 	container.ManaBar = manaBar

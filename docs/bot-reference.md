@@ -26,6 +26,9 @@ classic powershifting.
   alternate power bar, and the player frame switches to Blizzard's matching
   frame art while the bar is shown. On classic layouts the bar uses the
   border from Blizzard's classic alternate mana bar.
+- Stays hidden while Blizzard's own alternate mana bar is visible (retail
+  Balance in Moonkin form, and cat or bear form on Wrath, Cata, and Mists
+  Classic), since that bar uses the same slot.
 - On retail layouts the addon also nudges the container that holds combo
   points down 5 pixels so the bar does not overlap it.
 - Updates on power changes, shapeshift form changes, entering world, Status Text setting changes, and hover.

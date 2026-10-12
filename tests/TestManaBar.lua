@@ -38,6 +38,14 @@ local function Container()
 	return _G.MiniDruidManaContainer
 end
 
+local function SetPowerType(powerType)
+	_G.UnitPowerType = function()
+		return powerType
+	end
+
+	WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+end
+
 -- The mock has no frame art, so this builds the parts PlayerFrame_ToPlayerArt and
 -- PlayerFrame_ToVehicleArt touch.
 local function InstallRetailArt()
@@ -429,14 +437,6 @@ fw.describe("MiniDruidMana - retail frame art", function()
 		_G.MiniDruidManaDB.TextEnabled = false
 	end)
 
-	local function SetPowerType(powerType)
-		_G.UnitPowerType = function()
-			return powerType
-		end
-
-		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
-	end
-
 	local function AssertAlternateArt(message)
 		fw.falsy(art.FrameTexture:IsShown(), message .. ": plain frame hidden")
 		fw.truthy(art.AlternatePowerFrameTexture:IsShown(), message .. ": alternate frame shown")
@@ -562,6 +562,112 @@ fw.describe("MiniDruidMana - classic border", function()
 
 	fw.it("adds no frame art hooks without Blizzard's alternate frame art", function()
 		fw.eq(#WowMock.Hooks, 0, "no hooks at all")
+	end)
+end)
+
+fw.describe("MiniDruidMana - Blizzard's own alternate mana bar", function()
+	local manaType
+	local blizzardBar
+
+	fw.describe("retail", function()
+		local art
+
+		fw.before_each(function()
+			LoadAsDruid(function()
+				InstallRetailArt()
+				_G.AlternatePowerBar = _G.CreateFrame("StatusBar", nil, _G.PlayerFrame)
+				_G.AlternatePowerBar:Hide()
+			end)
+			manaType = _G.Enum.PowerType.Mana
+			blizzardBar = _G.AlternatePowerBar
+			art = _G.PlayerFrame.PlayerFrameContainer
+			SetPowerType(manaType + 1)
+		end)
+
+		-- Blizzard sets the active bar before the art redraw.
+		local function EnableBlizzardBar()
+			_G.PlayerFrame.activeAlternatePowerBar = blizzardBar
+			_G.PlayerFrame_ToPlayerArt(_G.PlayerFrame)
+			blizzardBar:Show()
+		end
+
+		local function DisableBlizzardBar()
+			_G.PlayerFrame.activeAlternatePowerBar = nil
+			_G.PlayerFrame_ToPlayerArt(_G.PlayerFrame)
+			blizzardBar:Hide()
+		end
+
+		fw.it("ignores Blizzard's bar while its parent area is hidden", function()
+			local area = _G.CreateFrame("Frame", nil, _G.PlayerFrame)
+			area:Hide()
+			blizzardBar:SetParent(area)
+			blizzardBar:Show()
+			SetPowerType(manaType + 1)
+
+			fw.truthy(Container():IsShown(), "ours shown")
+		end)
+
+		fw.it("hides ours while Blizzard's bar shows and keeps the alternate art", function()
+			EnableBlizzardBar()
+
+			fw.falsy(Container():IsShown(), "ours hidden")
+			fw.falsy(art.FrameTexture:IsShown(), "plain frame hidden")
+			fw.truthy(art.AlternatePowerFrameTexture:IsShown(), "alternate frame kept")
+		end)
+
+		fw.it("stays hidden through power updates while Blizzard's bar shows", function()
+			EnableBlizzardBar()
+			SetPowerType(manaType + 1)
+
+			fw.falsy(Container():IsShown(), "still hidden")
+		end)
+
+		fw.it("brings ours back with the alternate art once Blizzard's bar hides", function()
+			EnableBlizzardBar()
+
+			fw.falsy(Container():IsShown(), "ours hidden first")
+
+			DisableBlizzardBar()
+
+			fw.truthy(Container():IsShown(), "ours back")
+			fw.falsy(art.FrameTexture:IsShown(), "plain frame hidden")
+			fw.truthy(art.AlternatePowerFrameTexture:IsShown(), "alternate frame shown for ours")
+		end)
+	end)
+
+	fw.describe("classic", function()
+		fw.before_each(function()
+			LoadAsDruid(function()
+				_G.PlayerFrameManaBar = _G.CreateFrame("StatusBar", nil, _G.PlayerFrame)
+				_G.PlayerFrameAlternateManaBar = _G.CreateFrame("StatusBar", nil, _G.PlayerFrame)
+				_G.PlayerFrameAlternateManaBar:Hide()
+			end)
+			manaType = _G.Enum.PowerType.Mana
+			blizzardBar = _G.PlayerFrameAlternateManaBar
+			SetPowerType(manaType + 1)
+		end)
+
+		fw.it("hides ours while Blizzard's bar shows and brings it back after", function()
+			fw.truthy(Container():IsShown(), "ours shown before")
+
+			blizzardBar:Show()
+
+			fw.falsy(Container():IsShown(), "ours hidden")
+
+			blizzardBar:Hide()
+
+			fw.truthy(Container():IsShown(), "ours back")
+		end)
+
+		fw.it("keeps ours hidden when Blizzard's bar hides in a mana form", function()
+			blizzardBar:Show()
+			_G.UnitPowerType = function()
+				return manaType
+			end
+			blizzardBar:Hide()
+
+			fw.falsy(Container():IsShown(), "the form rule still applies")
+		end)
 	end)
 end)
 
