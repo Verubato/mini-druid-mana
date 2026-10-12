@@ -11,7 +11,8 @@ local fw = require("TestFramework")
 local harness = require("AddonHarness")
 local WowMock = require("WowMock")
 
-local function LoadAsDruid()
+---@param beforeLogin fun()? runs after the files load and before Init builds the bar
+local function LoadAsDruid(beforeLogin)
 	local context = harness.Load("MiniDruidMana")
 
 	_G.UnitClass = function(unit)
@@ -22,10 +23,11 @@ local function LoadAsDruid()
 		return nil, nil, nil
 	end
 
-	-- Login below fires the first UpdateManaBar draw. If a prior describe block left the
-	-- preserved TextEnabled true, that draw reaches GetManaPercentage before this file's own
-	-- before_each gets a chance to set CurveConstants, so it is primed here unconditionally.
 	_G.CurveConstants = { ScaleTo100 = {} }
+
+	if beforeLogin then
+		beforeLogin()
+	end
 
 	context.LoginResult = harness.Login(context)
 
@@ -34,6 +36,38 @@ end
 
 local function Container()
 	return _G.MiniDruidManaContainer
+end
+
+-- The mock has no frame art, so this builds the parts PlayerFrame_ToPlayerArt and
+-- PlayerFrame_ToVehicleArt touch.
+local function InstallRetailArt()
+	local playerFrame = _G.PlayerFrame
+	local art = _G.CreateFrame("Frame", nil, playerFrame)
+
+	art.FrameTexture = art:CreateTexture()
+	art.AlternatePowerFrameTexture = art:CreateTexture()
+	art.AlternatePowerFrameTexture:Hide()
+	art.FrameFlash = art:CreateTexture()
+	playerFrame.PlayerFrameContainer = art
+	playerFrame.manabar.ManaBarMask = playerFrame.manabar:CreateMaskTexture()
+	playerFrame.state = "player"
+
+	_G.TextureKitConstants = { UseAtlasSize = true }
+	_G.PlayerFrame_GetAlternatePowerBar = function()
+		return playerFrame.activeAlternatePowerBar
+	end
+	_G.PlayerFrame_ToPlayerArt = function()
+		playerFrame.state = "player"
+		art.FrameTexture:Show()
+		art.AlternatePowerFrameTexture:Hide()
+		art.FrameFlash:SetAtlas("UI-HUD-UnitFrame-Player-PortraitOn-InCombat")
+	end
+	_G.PlayerFrame_ToVehicleArt = function()
+		playerFrame.state = "vehicle"
+		art.FrameTexture:Hide()
+		art.AlternatePowerFrameTexture:Hide()
+		art.FrameFlash:SetAtlas("vehicle")
+	end
 end
 
 fw.describe("MiniDruidMana - GetManaPercentage", function()
@@ -222,6 +256,312 @@ fw.describe("MiniDruidMana - text toggle", function()
 
 		fw.eq(Container().ManaPercentage:GetText(), "", "percentage cleared")
 		fw.eq(Container().ManaValue:GetText(), "", "value cleared")
+	end)
+end)
+
+fw.describe("MiniDruidMana - status text setting", function()
+	local manaType
+	local mode
+
+	fw.before_each(function()
+		LoadAsDruid()
+		manaType = _G.Enum.PowerType.Mana
+		mode = "NONE"
+		_G.MiniDruidManaDB.TextEnabled = false
+		_G.GetCVar = function(name)
+			if name == "statusTextDisplay" then
+				return mode
+			end
+
+			return "0"
+		end
+		_G.UnitPowerType = function()
+			return manaType + 1
+		end
+		_G.UnitPowerPercent = function()
+			return 50
+		end
+		_G.UnitPower = function()
+			return 4000
+		end
+		_G.UnitPowerMax = function()
+			return 8000
+		end
+	end)
+
+	local function Texts()
+		return Container().ManaText:GetText(), Container().ManaPercentage:GetText(), Container().ManaValue:GetText()
+	end
+
+	fw.it("shows value over max in the centre for NUMERIC", function()
+		mode = "NUMERIC"
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+
+		local centre, left, right = Texts()
+
+		fw.eq(centre, "4.0K / 8.0K", "abbreviated value and max")
+		fw.eq(left .. right, "", "sides empty")
+	end)
+
+	fw.it("shows the percentage in the centre for PERCENT", function()
+		mode = "PERCENT"
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+
+		local centre, left, right = Texts()
+
+		fw.eq(centre, "50%", "percentage")
+		fw.eq(left .. right, "", "sides empty")
+	end)
+
+	fw.it("shows the percentage left and the value right for BOTH", function()
+		mode = "BOTH"
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+
+		local centre, left, right = Texts()
+
+		fw.eq(centre, "", "centre empty")
+		fw.eq(left, "50%", "percentage on the left")
+		fw.eq(right, "4.0K", "value on the right")
+	end)
+
+	fw.it("shows nothing for NONE", function()
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+
+		local centre, left, right = Texts()
+
+		fw.eq(centre .. left .. right, "", "all empty")
+	end)
+
+	fw.it("shows the BOTH layout for NONE while Always show text is on", function()
+		_G.MiniDruidManaDB.TextEnabled = true
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+
+		local centre, left, right = Texts()
+
+		fw.eq(centre, "", "centre empty")
+		fw.eq(left, "50%", "percentage on the left")
+		fw.eq(right, "4.0K", "value on the right")
+	end)
+
+	fw.it("shows the text for NONE only while the bar is hovered", function()
+		local manaBar = Container().ManaBar
+
+		manaBar:GetScript("OnEnter")(manaBar)
+
+		local _, left, right = Texts()
+
+		fw.eq(left, "50%", "percentage while hovered")
+		fw.eq(right, "4.0K", "value while hovered")
+
+		manaBar:GetScript("OnLeave")(manaBar)
+
+		local centre
+		centre, left, right = Texts()
+
+		fw.eq(centre .. left .. right, "", "cleared once the mouse leaves")
+	end)
+
+	fw.it("redraws when the setting changes", function()
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+
+		mode = "PERCENT"
+		WowMock.FireEvent("CVAR_UPDATE", "statusTextDisplay", "PERCENT")
+
+		fw.eq(Container().ManaText:GetText(), "50%", "picked up without a power event")
+	end)
+end)
+
+fw.describe("MiniDruidMana - secret mana values", function()
+	local manaType
+
+	fw.before_each(function()
+		LoadAsDruid()
+		manaType = _G.Enum.PowerType.Mana
+		_G.MiniDruidManaDB.TextEnabled = false
+		_G.UnitPowerType = function()
+			return manaType + 1
+		end
+		_G.UnitPowerPercent = function()
+			return WowMock.MakeSecret(50)
+		end
+		_G.UnitPower = function()
+			return WowMock.MakeSecret(4000)
+		end
+		_G.UnitPowerMax = function()
+			return WowMock.MakeSecret(8000)
+		end
+		-- The client's own AbbreviateNumbers accepts a secret and hands one back.
+		_G.AbbreviateNumbers = function(value)
+			return value
+		end
+	end)
+
+	for _, mode in ipairs({ "NUMERIC", "PERCENT", "BOTH", "NONE" }) do
+		fw.it("never compares or does arithmetic on a secret in " .. mode .. " mode", function()
+			_G.MiniDruidManaDB.TextEnabled = true
+			_G.GetCVar = function(name)
+				return name == "statusTextDisplay" and mode or "0"
+			end
+
+			fw.no_error(function()
+				WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+			end, "a full redraw with secret mana")
+
+			local text = Container().ManaPercentage:GetText()
+
+			if mode == "NUMERIC" or mode == "PERCENT" then
+				text = Container().ManaText:GetText()
+			end
+
+			fw.truthy(issecretvalue(text), "the secret reached the font string untouched")
+		end)
+	end
+end)
+
+fw.describe("MiniDruidMana - retail frame art", function()
+	local manaType
+	local art
+
+	fw.before_each(function()
+		LoadAsDruid(InstallRetailArt)
+		manaType = _G.Enum.PowerType.Mana
+		art = _G.PlayerFrame.PlayerFrameContainer
+		_G.MiniDruidManaDB.TextEnabled = false
+	end)
+
+	local function SetPowerType(powerType)
+		_G.UnitPowerType = function()
+			return powerType
+		end
+
+		WowMock.FireEvent("UNIT_DISPLAYPOWER", "player")
+	end
+
+	local function AssertAlternateArt(message)
+		fw.falsy(art.FrameTexture:IsShown(), message .. ": plain frame hidden")
+		fw.truthy(art.AlternatePowerFrameTexture:IsShown(), message .. ": alternate frame shown")
+		fw.eq(art.FrameFlash:GetAtlas(), "UI-HUD-UnitFrame-Player-PortraitOn-ClassResource-InCombat", message .. ": flash")
+		fw.eq(_G.PlayerFrame.manabar.ManaBarMask:GetAtlas(), "Unit_BarMask", message .. ": mana mask")
+	end
+
+	local function AssertPlayerArt(message)
+		fw.truthy(art.FrameTexture:IsShown(), message .. ": plain frame shown")
+		fw.falsy(art.AlternatePowerFrameTexture:IsShown(), message .. ": alternate frame hidden")
+		fw.eq(art.FrameFlash:GetAtlas(), "UI-HUD-UnitFrame-Player-PortraitOn-InCombat", message .. ": flash")
+		fw.eq(
+			_G.PlayerFrame.manabar.ManaBarMask:GetAtlas(),
+			"UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask",
+			message .. ": mana mask"
+		)
+	end
+
+	fw.it("sits in the alternate power bar slot with Blizzard's mask on the fill", function()
+		local main = _G.PlayerFrame.PlayerFrameContent.PlayerFrameContentMain
+		local point, relativeTo, relativePoint, x, y = Container():GetPoint()
+		local width, height = Container():GetSize()
+		local masks = Container().ManaBar:GetStatusBarTexture().__masks
+
+		fw.eq(point .. relativePoint, "TOPLEFTTOPLEFT", "top left to top left")
+		fw.eq(relativeTo, main, "anchored to the frame content")
+		fw.eq(x, 85, "slot x")
+		fw.eq(y, -73, "slot y")
+		fw.eq(width, 124, "slot width")
+		fw.eq(height, 9, "slot height")
+		fw.eq(masks[1]:GetAtlas(), "UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask", "fill masked")
+	end)
+
+	fw.it("swaps to the alternate frame art while the bar shows and back when it hides", function()
+		SetPowerType(manaType + 1)
+
+		AssertAlternateArt("bar shown")
+
+		SetPowerType(manaType)
+
+		AssertPlayerArt("bar hidden")
+
+		local _, _, _, x, y = art.FrameFlash:GetPoint(#art.FrameFlash.__points)
+
+		fw.eq(x, -1.5, "flash x put back")
+		fw.eq(y, 1, "flash y put back")
+	end)
+
+	fw.it("swaps the art at login when the bar starts out shown", function()
+		LoadAsDruid(function()
+			InstallRetailArt()
+			_G.UnitPowerType = function()
+				return manaType + 1
+			end
+		end)
+		art = _G.PlayerFrame.PlayerFrameContainer
+
+		AssertAlternateArt("straight after login")
+	end)
+
+	fw.it("keeps the alternate art while Blizzard's own alternate bar is up", function()
+		_G.PlayerFrame.activeAlternatePowerBar = {}
+
+		SetPowerType(manaType + 1)
+		SetPowerType(manaType)
+
+		AssertAlternateArt("only Blizzard's bar left")
+	end)
+
+	fw.it("re-applies the swap after Blizzard redraws the player art", function()
+		SetPowerType(manaType + 1)
+
+		_G.PlayerFrame_ToPlayerArt(_G.PlayerFrame)
+
+		AssertAlternateArt("after PlayerFrame_ToPlayerArt")
+	end)
+
+	fw.it("leaves vehicle art alone", function()
+		SetPowerType(manaType + 1)
+
+		_G.PlayerFrame_ToVehicleArt(_G.PlayerFrame)
+		SetPowerType(manaType)
+		SetPowerType(manaType + 1)
+
+		fw.falsy(art.FrameTexture:IsShown(), "plain frame stays hidden")
+		fw.falsy(art.AlternatePowerFrameTexture:IsShown(), "alternate frame stays hidden")
+		fw.eq(art.FrameFlash:GetAtlas(), "vehicle", "vehicle flash kept")
+	end)
+
+	fw.it("only hooks the two art functions", function()
+		for _, name in ipairs(WowMock.Hooks) do
+			fw.truthy(name:find("^PlayerFrame_To") ~= nil, "unexpected hook " .. name)
+		end
+
+		fw.eq(#WowMock.Hooks, 2, "only the two art hooks")
+	end)
+end)
+
+fw.describe("MiniDruidMana - classic border", function()
+	fw.before_each(function()
+		LoadAsDruid(function()
+			_G.PlayerFrameManaBar = _G.CreateFrame("StatusBar", nil, _G.PlayerFrame)
+		end)
+	end)
+
+	local function TexCoord(texture)
+		local left, top, _, bottom, right = texture:GetTexCoord()
+
+		return { left, right, top, bottom }
+	end
+
+	fw.it("draws the group indicator border flipped vertically, with caps on each end", function()
+		local file = "Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator"
+
+		for _, key in ipairs({ "BorderLeft", "BorderMiddle", "BorderRight" }) do
+			fw.eq(Container()[key]:GetTexture(), file, key .. " texture")
+		end
+
+		fw.eq(table.concat(TexCoord(Container().BorderMiddle), ","), "0.125,0.25,1,0", "middle")
+		fw.eq(table.concat(TexCoord(Container().BorderLeft), ","), "0,0.125,1,0", "left cap")
+		fw.eq(table.concat(TexCoord(Container().BorderRight), ","), "0.125,0,1,0", "right cap mirrored")
+	end)
+
+	fw.it("adds no frame art hooks without Blizzard's alternate frame art", function()
+		fw.eq(#WowMock.Hooks, 0, "no hooks at all")
 	end)
 end)
 

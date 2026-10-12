@@ -22,9 +22,13 @@ classic powershifting.
   and retail frame layouts, with a generic fallback position on unknown
   layouts). Only the default Blizzard player frame is supported.
 - Bar fill is your current mana out of max mana.
+- On retail layouts the bar sits in the slot Blizzard uses for its own
+  alternate power bar, and the player frame switches to Blizzard's matching
+  frame art while the bar is shown. On classic layouts the bar uses the
+  border from Blizzard's classic alternate mana bar.
 - On retail layouts the addon also nudges the container that holds combo
   points down 5 pixels so the bar does not overlap it.
-- Updates on power changes, shapeshift form changes, and entering world.
+- Updates on power changes, shapeshift form changes, entering world, Status Text setting changes, and hover.
 
 ## Settings
 
@@ -32,7 +36,7 @@ Open with a slash command or Options -> AddOns -> MiniDruidMana.
 
 | Setting | Type | Default | Effect |
 |---|---|---|---|
-| Show text | checkbox | off | Shows mana percentage on the left of the bar and abbreviated mana value on the right. |
+| Always show text | checkbox | off | The text follows the game's Interface -> Display -> Status Text setting. When that is None, the text shows on mouseover, and this option keeps it visible instead, as percentage and value. |
 
 ## Slash commands
 
@@ -45,4 +49,6 @@ Open with a slash command or Options -> AddOns -> MiniDruidMana.
 - "I use ElvUI / another unit frame addon": the bar anchors to the default
   Blizzard PlayerFrame; if that frame is hidden or replaced the bar will not
   be visible where expected.
-- "I want numbers on the bar": turn on "Show text" in the settings.
+- "I want numbers on the bar": set Interface -> Display -> Status Text to
+  Numeric Value, Percentage, or Both, or turn on "Always show text" in the
+  settings. Hovering the bar shows the text either way.

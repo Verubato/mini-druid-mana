@@ -34,8 +34,8 @@ function M:Init()
 
 	local textEnabledChk = mini:Checkbox({
 		Parent = panel,
-		LabelText = "Show text",
-		Tooltip = "Whether to show or hide the mana value and percentage text.",
+		LabelText = "Always show text",
+		Tooltip = "Keep the mana percentage and value visible when Interface > Display > Status Text is set to None. Otherwise the text follows that setting, and shows on mouseover when it is None.",
 		GetValue = function()
 			return db.TextEnabled
 		end,
