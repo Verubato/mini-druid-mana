@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0
+
+The mana bar now has a Blizzard-style border and sits in the player frame's mana slot on newer frames.
+The bar text follows Interface > Display > Status Text (numeric, percentage, both, or none), and shows on mouseover when set to none.
+The "Show text" option is now "Always show text".
+
 ## 1.4.8
 
 Added WoW Forever support.
