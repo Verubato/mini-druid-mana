@@ -689,3 +689,98 @@ fw.describe("MiniDruidMana - non-druid login", function()
 		end, "power events with the druid frame never registered")
 	end)
 end)
+
+fw.describe("MiniDruidMana - five second rule", function()
+	local mainline = _G.WOW_PROJECT_ID
+
+	local function CastWithCost(cost)
+		_G.C_Spell.GetSpellPowerCost = function(spellId)
+			if spellId == 774 then
+				return { { type = _G.Enum.PowerType.Mana, cost = cost } }
+			end
+		end
+
+		return WowMock.FireEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 774)
+	end
+
+	local function Marker()
+		for i = #WowMock.Frames, 1, -1 do
+			if WowMock.Frames[i].Marker then
+				return WowMock.Frames[i]
+			end
+		end
+	end
+
+	fw.before_each(function()
+		_G.WOW_PROJECT_ID = mainline
+	end)
+
+	fw.it("shows the countdown on the bar after a mana spending cast on Classic", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+		SetPowerType(_G.Enum.PowerType.Mana + 1)
+
+		CastWithCost(50)
+
+		local countdown = Marker()
+		fw.truthy(countdown:IsShown(), "the marker is up for the five second window")
+		fw.eq(countdown.Text:GetText(), "5.0", "the full window remains straight after the cast")
+	end)
+
+	fw.it("ignores a cast that costs no mana", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+		SetPowerType(_G.Enum.PowerType.Mana + 1)
+
+		CastWithCost(0)
+
+		fw.falsy(Marker():IsShown(), "a free cast starts no window")
+	end)
+
+	fw.it("hides the countdown once five seconds have passed", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+		SetPowerType(_G.Enum.PowerType.Mana + 1)
+		CastWithCost(50)
+		local countdown = Marker()
+
+		WowMock.AdvanceTime(5.1)
+		WowMock.RunOnUpdate(0.1)
+
+		fw.falsy(countdown:IsShown(), "the window is over")
+	end)
+
+	fw.it("keeps the countdown on screen after leaving a form mid window", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+		_G.PlayerFrameManaBar = CreateFrame("StatusBar")
+		SetPowerType(_G.Enum.PowerType.Mana + 1)
+		CastWithCost(50)
+		local countdown = Marker()
+
+		SetPowerType(_G.Enum.PowerType.Mana)
+		WowMock.AdvanceTime(1)
+		WowMock.RunOnUpdate(0.1)
+
+		fw.eq(countdown:GetParent(), _G.PlayerFrameManaBar, "the marker moves to the player mana bar")
+		fw.truthy(countdown:IsShown(), "the marker is still up")
+	end)
+
+	fw.it("does not listen for casts on retail", function()
+		LoadAsDruid()
+
+		fw.eq(CastWithCost(50), 0, "no frame registered for UNIT_SPELLCAST_SUCCEEDED")
+	end)
+
+	fw.it("does not listen for casts on Cataclysm Classic", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CATACLYSM_CLASSIC
+		end)
+
+		fw.eq(CastWithCost(50), 0, "no frame registered for UNIT_SPELLCAST_SUCCEEDED")
+	end)
+end)

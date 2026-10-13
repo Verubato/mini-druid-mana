@@ -26,6 +26,10 @@ local alternateArt = {
 ---@type Db
 local db
 local hovered = false
+local fiveSecondRule = 5
+local fiveSecondEnd = 0
+local fiveSecondFrame
+local fiveSecondDriver
 -- Blizzard's own bar for mana in a non-mana form, which shares our slot.
 local blizzardManaBar
 
@@ -274,6 +278,101 @@ local function InitManaBar()
 	end
 end
 
+local function GetFiveSecondBar()
+	if container and container:IsShown() then
+		return container.ManaBar
+	end
+	if blizzardManaBar and blizzardManaBar:IsShown() then
+		return blizzardManaBar
+	end
+	return PlayerFrameManaBar
+end
+
+local function StopFiveSecondRule()
+	fiveSecondEnd = 0
+	fiveSecondDriver:SetScript("OnUpdate", nil)
+	fiveSecondFrame:Hide()
+end
+
+-- The marker hides with whichever bar it sits on, so the timer runs on a frame that never hides.
+local function OnFiveSecondUpdate()
+	local remaining = fiveSecondEnd - GetTime()
+	local bar = GetFiveSecondBar()
+
+	if remaining <= 0 or not bar then
+		StopFiveSecondRule()
+		return
+	end
+
+	if fiveSecondFrame:GetParent() ~= bar then
+		fiveSecondFrame:SetParent(bar)
+		fiveSecondFrame:ClearAllPoints()
+		fiveSecondFrame:SetAllPoints(bar)
+	end
+
+	local progress = (fiveSecondRule - remaining) / fiveSecondRule
+	fiveSecondFrame.Marker:ClearAllPoints()
+	fiveSecondFrame.Marker:SetPoint("CENTER", fiveSecondFrame, "LEFT", progress * bar:GetWidth(), 0)
+	fiveSecondFrame.Text:SetText(string.format("%.1f", remaining))
+	fiveSecondFrame:Show()
+end
+
+local function SpellSpendsMana(spellId)
+	local getCost = (C_Spell and C_Spell.GetSpellPowerCost) or GetSpellPowerCost
+	local costs = spellId and getCost and getCost(spellId)
+
+	for _, cost in ipairs(costs or {}) do
+		if cost.type == powerTypeMana and cost.cost > 0 then
+			return true
+		end
+	end
+
+	return false
+end
+
+local function OnSpellCastSucceeded(_, _, _, _, spellId)
+	if not SpellSpendsMana(spellId) then
+		return
+	end
+
+	fiveSecondEnd = GetTime() + fiveSecondRule
+	fiveSecondDriver:SetScript("OnUpdate", OnFiveSecondUpdate)
+	OnFiveSecondUpdate()
+end
+
+-- Cataclysm removed the five second rule, so only the clients before it get the marker.
+local function InitFiveSecondRule()
+	local project = WOW_PROJECT_ID
+	if
+		project == nil
+		or (
+			project ~= WOW_PROJECT_CLASSIC
+			and project ~= WOW_PROJECT_BURNING_CRUSADE_CLASSIC
+			and project ~= WOW_PROJECT_WRATH_CLASSIC
+		)
+	then
+		return
+	end
+
+	fiveSecondFrame = CreateFrame("Frame", nil, UIParent)
+	fiveSecondFrame:Hide()
+
+	local marker = fiveSecondFrame:CreateTexture(nil, "OVERLAY")
+	marker:SetColorTexture(1, 1, 1, 0.95)
+	marker:SetSize(2, 12)
+
+	local text = fiveSecondFrame:CreateFontString(nil, "OVERLAY")
+	text:SetFont(font.File, font.Size, font.Flags)
+	text:SetPoint("TOP", fiveSecondFrame, "BOTTOM", 0, -2)
+
+	fiveSecondFrame.Marker = marker
+	fiveSecondFrame.Text = text
+
+	fiveSecondDriver = CreateFrame("Frame")
+	fiveSecondDriver:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+	fiveSecondDriver:SetScript("OnEvent", OnSpellCastSucceeded)
+end
+
 local function Init()
 	local _, _, classId = UnitClass("player")
 	local druidClassId = 11
@@ -291,6 +390,7 @@ local function Init()
 	frame:SetScript("OnEvent", OnEvent)
 
 	InitManaBar()
+	InitFiveSecondRule()
 end
 
 local function OnEnteringWorld()
