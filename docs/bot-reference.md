@@ -1,6 +1,6 @@
 # MiniDruidMana - bot reference
 
-Version 1.5.1. Interface versions: 120100, 16001, 50504, 40402, 38002, 38000,
+Version 1.5.2. Interface versions: 120105, 120100, 16001, 50504, 40402, 38002, 38000,
 30405, 20506, 11509 (retail plus the classic client lines).
 Saved variables: MiniDruidManaDB (account-wide).
 

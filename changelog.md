@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.2
+
+Updated for patch 12.1.5.
+
 ## 1.5.1
 
 The mana bar now hides while Blizzard's own druid mana bar is showing, so the two no longer overlap.
