@@ -713,6 +713,8 @@ fw.describe("MiniDruidMana - five second rule", function()
 
 	fw.before_each(function()
 		_G.WOW_PROJECT_ID = mainline
+		_G.WOW_PROJECT_CAMELOT = nil
+		_G.PlayerFrameManaBar = nil
 	end)
 
 	fw.it("shows the countdown on the bar after a mana spending cast on Classic", function()
@@ -768,6 +770,27 @@ fw.describe("MiniDruidMana - five second rule", function()
 
 		fw.eq(countdown:GetParent(), _G.PlayerFrameManaBar, "the marker moves to the player mana bar")
 		fw.truthy(countdown:IsShown(), "the marker is still up")
+	end)
+
+	fw.it("listens for casts on the Camelot client", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_CAMELOT = 18
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CAMELOT
+		end)
+
+		fw.eq(CastWithCost(50), 1, "one frame registered for UNIT_SPELLCAST_SUCCEEDED")
+	end)
+
+	fw.it("puts the countdown on the newer player frame's mana bar in caster form", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_CAMELOT = 18
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CAMELOT
+		end)
+		SetPowerType(_G.Enum.PowerType.Mana)
+
+		CastWithCost(50)
+
+		fw.eq(Marker():GetParent(), _G.PlayerFrame.manabar, "the marker sits on PlayerFrame.manabar")
 	end)
 
 	fw.it("does not listen for casts on retail", function()

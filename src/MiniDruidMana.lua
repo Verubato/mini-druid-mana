@@ -285,7 +285,8 @@ local function GetFiveSecondBar()
 	if blizzardManaBar and blizzardManaBar:IsShown() then
 		return blizzardManaBar
 	end
-	return PlayerFrameManaBar
+	-- The newer player frame layout has no PlayerFrameManaBar global.
+	return PlayerFrameManaBar or (PlayerFrame and PlayerFrame.manabar)
 end
 
 local function StopFiveSecondRule()
@@ -340,7 +341,7 @@ local function OnSpellCastSucceeded(_, _, _, _, spellId)
 	OnFiveSecondUpdate()
 end
 
--- Cataclysm removed the five second rule, so only the clients before it get the marker.
+-- Cataclysm removed the five second rule, so only the clients that still have it get the marker.
 local function InitFiveSecondRule()
 	local project = WOW_PROJECT_ID
 	if
@@ -349,6 +350,7 @@ local function InitFiveSecondRule()
 			project ~= WOW_PROJECT_CLASSIC
 			and project ~= WOW_PROJECT_BURNING_CRUSADE_CLASSIC
 			and project ~= WOW_PROJECT_WRATH_CLASSIC
+			and project ~= WOW_PROJECT_CAMELOT
 		)
 	then
 		return
