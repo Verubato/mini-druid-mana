@@ -1,6 +1,6 @@
 # MiniDruidMana - bot reference
 
-Version 1.5.2. Interface versions: 120105, 120100, 16001, 50504, 40402, 38002, 38000,
+Version 1.6.0. Interface versions: 120105, 120100, 16001, 50504, 40402, 38002, 38000,
 30405, 20506, 11509 (retail plus the classic client lines).
 Saved variables: MiniDruidManaDB (account-wide).
 
@@ -31,6 +31,11 @@ classic powershifting.
   Classic), since that bar uses the same slot.
 - On retail layouts the addon also nudges the container that holds combo
   points down 5 pixels so the bar does not overlap it.
+- On Classic Era, Burning Crusade, Wrath Classic, and Classic Forever only, a thin marker
+  sweeps across the mana bar for five seconds after a cast that costs mana,
+  with the seconds left beneath it (the five second rule). It sits on the
+  addon's bar when shown, else Blizzard's alternate mana bar, else the
+  player frame's mana bar. Retail, Cata, and Mists have no such rule.
 - Updates on power changes, shapeshift form changes, entering world, Status Text setting changes, and hover.
 
 ## Settings

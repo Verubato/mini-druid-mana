@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.6.0
 
-On Classic Era, Burning Crusade, and Wrath clients a marker now sweeps across the mana bar for five seconds after a spell that costs mana, with the time left beneath it, so you can see when mana regeneration resumes.
+On Classic Era, Burning Crusade, Wrath, and Classic Forever clients a marker now sweeps across the mana bar for five seconds after a spell that costs mana, with the time left beneath it, so you can see when mana regeneration resumes.
 
 ## 1.5.2
 
