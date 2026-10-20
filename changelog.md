@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.7.0
 
 Added a "Show five second rule" option to turn the five second rule marker on or off on Classic Era, Burning Crusade, Wrath, and Classic Forever clients. It is on by default.
 
