@@ -715,6 +715,69 @@ fw.describe("MiniDruidMana - five second rule", function()
 		_G.WOW_PROJECT_ID = mainline
 		_G.WOW_PROJECT_CAMELOT = nil
 		_G.PlayerFrameManaBar = nil
+
+		if _G.MiniDruidManaDB then
+			_G.MiniDruidManaDB.FiveSecondRuleEnabled = nil
+		end
+	end)
+
+	local function SetEnabled(context, enabled)
+		_G.MiniDruidManaDB.FiveSecondRuleEnabled = enabled
+		context.Addon:Update()
+	end
+
+	fw.it("is on by default for saved variables that predate the option", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+
+		fw.eq(_G.MiniDruidManaDB.FiveSecondRuleEnabled, true, "the default fills the missing key")
+		fw.eq(CastWithCost(50), 1, "listening for casts")
+	end)
+
+	fw.it("does not listen for casts when turned off before login", function()
+		LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+			_G.MiniDruidManaDB.FiveSecondRuleEnabled = false
+		end)
+
+		fw.eq(CastWithCost(50), 0, "no frame registered for UNIT_SPELLCAST_SUCCEEDED")
+	end)
+
+	fw.it("hides the countdown and stops listening when turned off mid window", function()
+		local context = LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+		SetPowerType(_G.Enum.PowerType.Mana + 1)
+		CastWithCost(50)
+		local countdown = Marker()
+
+		fw.truthy(countdown:IsShown(), "the marker is up before the toggle")
+
+		SetEnabled(context, false)
+
+		fw.falsy(countdown:IsShown(), "the marker is gone straight away")
+
+		WowMock.RunOnUpdate(0.1)
+
+		fw.falsy(countdown:IsShown(), "no frame update brings it back")
+		fw.eq(CastWithCost(50), 0, "no frame registered for UNIT_SPELLCAST_SUCCEEDED")
+		fw.falsy(countdown:IsShown(), "a later cast brings nothing back")
+	end)
+
+	fw.it("shows the countdown again once turned back on", function()
+		local context = LoadAsDruid(function()
+			_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CLASSIC
+		end)
+		SetPowerType(_G.Enum.PowerType.Mana + 1)
+
+		SetEnabled(context, false)
+		SetEnabled(context, true)
+		CastWithCost(50)
+
+		local countdown = Marker()
+		fw.truthy(countdown:IsShown(), "the marker is back after a cast")
+		fw.eq(countdown.Text:GetText(), "5.0", "with the full window")
 	end)
 
 	fw.it("shows the countdown on the bar after a mana spending cast on Classic", function()

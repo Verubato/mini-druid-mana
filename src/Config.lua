@@ -6,6 +6,7 @@ local db
 ---@class Db
 local dbDefaults = {
 	TextEnabled = false,
+	FiveSecondRuleEnabled = true,
 }
 ---@class Config
 local M = {}
@@ -46,6 +47,23 @@ function M:Init()
 	})
 
 	textEnabledChk:SetPoint("TOPLEFT", header.Anchor, "BOTTOMLEFT", 0, -verticalSpacing)
+
+	if addon:HasFiveSecondRule() then
+		local fiveSecondRuleChk = mini:Checkbox({
+			Parent = panel,
+			LabelText = "Show five second rule",
+			Tooltip = "Sweep a marker across the mana bar for five seconds after a spell that costs mana, so you can see when mana regeneration resumes.",
+			GetValue = function()
+				return db.FiveSecondRuleEnabled
+			end,
+			SetValue = function(enabled)
+				db.FiveSecondRuleEnabled = enabled
+				addon:Update()
+			end,
+		})
+
+		fiveSecondRuleChk:SetPoint("TOPLEFT", textEnabledChk, "BOTTOMLEFT", 0, -verticalSpacing)
+	end
 
 	mini:RegisterSlashCommand(category, panel, {
 		"/minidruidmana",

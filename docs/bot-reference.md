@@ -45,6 +45,7 @@ Open with a slash command or Options -> AddOns -> MiniDruidMana.
 | Setting | Type | Default | Effect |
 |---|---|---|---|
 | Always show text | checkbox | off | The text follows the game's Interface -> Display -> Status Text setting. When that is None, the text shows on mouseover, and this option keeps it visible instead, as percentage and value. |
+| Show five second rule | checkbox | on | Shows the five second rule marker on the mana bar after a cast that costs mana. Only offered on Classic Era, Burning Crusade, Wrath Classic, and Classic Forever. |
 
 ## Slash commands
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+Added a "Show five second rule" option to turn the five second rule marker on or off on Classic Era, Burning Crusade, Wrath, and Classic Forever clients. It is on by default.
+
 ## 1.6.0
 
 On Classic Era, Burning Crusade, Wrath, and Classic Forever clients a marker now sweeps across the mana bar for five seconds after a spell that costs mana, with the time left beneath it, so you can see when mana regeneration resumes.

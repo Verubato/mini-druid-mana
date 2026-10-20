@@ -342,17 +342,33 @@ local function OnSpellCastSucceeded(_, _, _, _, spellId)
 end
 
 -- Cataclysm removed the five second rule, so only the clients that still have it get the marker.
-local function InitFiveSecondRule()
+local function HasFiveSecondRule()
 	local project = WOW_PROJECT_ID
-	if
-		project == nil
-		or (
-			project ~= WOW_PROJECT_CLASSIC
-			and project ~= WOW_PROJECT_BURNING_CRUSADE_CLASSIC
-			and project ~= WOW_PROJECT_WRATH_CLASSIC
-			and project ~= WOW_PROJECT_CAMELOT
+
+	return project ~= nil
+		and (
+			project == WOW_PROJECT_CLASSIC
+			or project == WOW_PROJECT_BURNING_CRUSADE_CLASSIC
+			or project == WOW_PROJECT_WRATH_CLASSIC
+			or project == WOW_PROJECT_CAMELOT
 		)
-	then
+end
+
+local function UpdateFiveSecondRule()
+	if not fiveSecondDriver then
+		return
+	end
+
+	if db.FiveSecondRuleEnabled then
+		fiveSecondDriver:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+	else
+		fiveSecondDriver:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+		StopFiveSecondRule()
+	end
+end
+
+local function InitFiveSecondRule()
+	if not HasFiveSecondRule() then
 		return
 	end
 
@@ -371,8 +387,9 @@ local function InitFiveSecondRule()
 	fiveSecondFrame.Text = text
 
 	fiveSecondDriver = CreateFrame("Frame")
-	fiveSecondDriver:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 	fiveSecondDriver:SetScript("OnEvent", OnSpellCastSucceeded)
+
+	UpdateFiveSecondRule()
 end
 
 local function Init()
@@ -411,8 +428,13 @@ local function OnAddonLoaded()
 	frame:SetScript("OnEvent", OnEnteringWorld)
 end
 
+function addon:HasFiveSecondRule()
+	return HasFiveSecondRule()
+end
+
 function addon:Update()
 	UpdateManaBar()
+	UpdateFiveSecondRule()
 end
 
 mini:WaitForAddonLoad(OnAddonLoaded)
