@@ -23,16 +23,6 @@ local alternateArt = {
 	FlashY = 0.5,
 	ManaMask = "Unit_BarMask",
 }
-
--- Classic Forever centres both flash atlases on the frame.
-local function GetFlashOffset(art)
-	if WOW_PROJECT_ID ~= nil and WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
-		return 0, 0
-	end
-
-	return art.FlashX, art.FlashY
-end
-
 ---@type Db
 local db
 local hovered = false
@@ -42,6 +32,15 @@ local fiveSecondFrame
 local fiveSecondDriver
 -- Blizzard's own bar for mana in a non-mana form, which shares our slot.
 local blizzardManaBar
+
+-- Classic Forever centres both flash atlases on the frame.
+local function GetFlashOffset(art)
+	if WOW_PROJECT_ID ~= nil and WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+		return 0, 0
+	end
+
+	return art.FlashX, art.FlashY
+end
 
 local function GetManaPercentage()
 	if UnitPowerPercent then
