@@ -431,6 +431,7 @@ fw.describe("MiniDruidMana - retail frame art", function()
 	local art
 
 	fw.before_each(function()
+		_G.WOW_PROJECT_CAMELOT = nil
 		LoadAsDruid(InstallRetailArt)
 		manaType = _G.Enum.PowerType.Mana
 		art = _G.PlayerFrame.PlayerFrameContainer
@@ -456,15 +457,14 @@ fw.describe("MiniDruidMana - retail frame art", function()
 	end
 
 	fw.it("sits in the alternate power bar slot with Blizzard's mask on the fill", function()
-		local main = _G.PlayerFrame.PlayerFrameContent.PlayerFrameContentMain
 		local point, relativeTo, relativePoint, x, y = Container():GetPoint()
 		local width, height = Container():GetSize()
 		local masks = Container().ManaBar:GetStatusBarTexture().__masks
 
-		fw.eq(point .. relativePoint, "TOPLEFTTOPLEFT", "top left to top left")
-		fw.eq(relativeTo, main, "anchored to the frame content")
-		fw.eq(x, 85, "slot x")
-		fw.eq(y, -73, "slot y")
+		fw.eq(point .. relativePoint, "TOPLEFTBOTTOMLEFT", "top left to bottom left")
+		fw.eq(relativeTo, _G.PlayerFrame.manabar, "anchored under the player mana bar")
+		fw.eq(x, 0, "slot x")
+		fw.eq(y, -2, "slot y")
 		fw.eq(width, 124, "slot width")
 		fw.eq(height, 9, "slot height")
 		fw.eq(masks[1]:GetAtlas(), "UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask", "fill masked")
@@ -483,6 +483,40 @@ fw.describe("MiniDruidMana - retail frame art", function()
 
 		fw.eq(x, -1.5, "flash x put back")
 		fw.eq(y, 1, "flash y put back")
+	end)
+
+	fw.it("places the flash with the retail offsets for both art states", function()
+		local function FlashOffset()
+			local _, _, _, x, y = art.FrameFlash:GetPoint(#art.FrameFlash.__points)
+
+			return x, y
+		end
+
+		SetPowerType(manaType + 1)
+		local x, y = FlashOffset()
+
+		fw.eq(x, -2, "alternate flash x")
+		fw.eq(y, 0.5, "alternate flash y")
+
+		SetPowerType(manaType)
+		x, y = FlashOffset()
+
+		fw.eq(x, -1.5, "plain flash x")
+		fw.eq(y, 1, "plain flash y")
+	end)
+
+	fw.it("centres the flash for both art states on Classic Forever", function()
+		_G.WOW_PROJECT_CAMELOT = 18
+		_G.WOW_PROJECT_ID = _G.WOW_PROJECT_CAMELOT
+
+		for _, powerType in ipairs({ manaType + 1, manaType }) do
+			SetPowerType(powerType)
+
+			local _, _, _, x, y = art.FrameFlash:GetPoint(#art.FrameFlash.__points)
+
+			fw.eq(x, 0, "flash x for power type " .. powerType)
+			fw.eq(y, 0, "flash y for power type " .. powerType)
+		end
 	end)
 
 	fw.it("swaps the art at login when the bar starts out shown", function()

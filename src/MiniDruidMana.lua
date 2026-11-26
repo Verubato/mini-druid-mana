@@ -23,6 +23,16 @@ local alternateArt = {
 	FlashY = 0.5,
 	ManaMask = "Unit_BarMask",
 }
+
+-- Classic Forever centres both flash atlases on the frame.
+local function GetFlashOffset(art)
+	if WOW_PROJECT_ID ~= nil and WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+		return 0, 0
+	end
+
+	return art.FlashX, art.FlashY
+end
+
 ---@type Db
 local db
 local hovered = false
@@ -135,7 +145,8 @@ local function SyncFrameArt()
 	frameContainer.FrameTexture:SetShown(not alternate)
 	frameContainer.AlternatePowerFrameTexture:SetShown(alternate)
 	flash:SetAtlas(art.Flash, TextureKitConstants.UseAtlasSize)
-	flash:SetPoint("CENTER", flash:GetParent(), "CENTER", art.FlashX, art.FlashY)
+	local flashX, flashY = GetFlashOffset(art)
+	flash:SetPoint("CENTER", flash:GetParent(), "CENTER", flashX, flashY)
 
 	if manaBarMask then
 		manaBarMask:SetAtlas(art.ManaMask, TextureKitConstants.UseAtlasSize)
@@ -207,8 +218,8 @@ local function InitManaBar()
 		)
 		container:SetPoint("TOPLEFT", PlayerFrameManaBar, "BOTTOMLEFT", 0, 0)
 	elseif frameArt then
-		-- retail, in the slot Blizzard's alternate power bar uses
-		container:SetPoint("TOPLEFT", PlayerFrame.PlayerFrameContent.PlayerFrameContentMain, "TOPLEFT", 85, -73)
+		-- The slot Blizzard's alternate power bar uses, which follows the mana bar's x on Forever.
+		container:SetPoint("TOPLEFT", PlayerFrame.manabar, "BOTTOMLEFT", 0, -2)
 		container:SetSize(124, 9)
 	elseif PlayerFrame then
 		-- unknown scenario
