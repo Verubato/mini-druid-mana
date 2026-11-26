@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1
+
+On Classic Forever the mana bar now lines up with the bars above it, and the red in-combat highlight on the player frame now fits around it.
+
 ## 1.7.0
 
 Added a "Show five second rule" option to turn the five second rule marker on or off on Classic Era, Burning Crusade, Wrath, and Classic Forever clients. It is on by default.
